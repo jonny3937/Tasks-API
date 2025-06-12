@@ -1,25 +1,15 @@
-require('dotenv').config(); 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-module.exports = pool;
-
-
 import express from 'express';
+import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+
+dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-
 app.use(express.json());
-// post ama create
+
+// Create a task
 app.post('/tasks', async (req, res) => {
   const { title, description } = req.body;
   try {
@@ -28,10 +18,11 @@ app.post('/tasks', async (req, res) => {
     });
     res.json(task);
   } catch (error) {
-    res.status(500).json({ error: 'failed to create taskss' });
+    res.status(500).json({ error: 'Failed to create task' });
   }
 });
-// Get all
+
+// Get all tasks
 app.get('/tasks', async (req, res) => {
   try {
     const tasks = await prisma.task.findMany();
@@ -41,17 +32,23 @@ app.get('/tasks', async (req, res) => {
   }
 });
 
-// Get 
+// Get a specific task
 app.get('/tasks/:id', async (req, res) => {
   const { id } = req.params;
-  const task = await prisma.task.findUnique({ where: { id } });
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+  try {
+    const task = await prisma.task.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch task' });
   }
-  res.json(task);
 });
 
-// Update 
+// Update a task
 app.put('/tasks/:id', async (req, res) => {
   const { id } = req.params;
   const { title, description, isCompleted } = req.body;
@@ -66,11 +63,12 @@ app.put('/tasks/:id', async (req, res) => {
     res.status(500).json({ error: 'Task not found or update failed' });
   }
 });
-// Delete
+
+// Delete a task
 app.delete('/tasks/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.task.delete({ where: { id } });
+    await prisma.task.delete({ where: { id: Number(id) } });
     res.json({ message: 'Task deleted successfully' });
   } catch (error) {
     res.status(404).json({ error: 'Task not found' });
@@ -82,4 +80,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
