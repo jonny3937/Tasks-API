@@ -1,3 +1,16 @@
+require('dotenv').config(); 
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+module.exports = pool;
+
+
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -64,7 +77,9 @@ app.delete('/tasks/:id', async (req, res) => {
   }
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`Server running at ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
